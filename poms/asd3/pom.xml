@@ -14,13 +14,5 @@
             <groupId>com.foo.bar</groupId>
             <artifactId>number-four</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.foo.bar</groupId>
-            <artifactId>number-five</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.foo.bar</groupId>
-            <artifactId>number-six</artifactId>
-        </dependency>
     </dependencies>
 </project>

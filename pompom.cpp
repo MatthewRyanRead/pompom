@@ -10,12 +10,20 @@
 
 void PomPom::run() {
     QMap<QString, GraphNode*> modules;
-
     QTextStream in(stdin);
+    QTextStream out(stdout);
+
     while (!in.atEnd()) {
-        QString filepath = in.readLine();
+        QString filepath = in.readLine().trimmed();
+        if (filepath == "EOF") {
+            break;
+        }
+
         QFile pomfile(filepath);
-        pomfile.open(QIODevice::ReadOnly);
+        if (filepath.length() == 0 || !pomfile.open(QIODevice::ReadOnly)) {
+//qDebug() << "Bad file: " << filepath;
+            continue;
+        }
 
         QXmlQuery moduleNameQuery, dependencyNameQuery;
         moduleNameQuery.bindVariable("pomfile", &pomfile);
@@ -25,25 +33,31 @@ void PomPom::run() {
                                   doc($pomfile)/project/artifactId/string()");
         dependencyNameQuery.setQuery("declare default element namespace \"http://maven.apache.org/POM/4.0.0\"; \
                                       declare variable $pomfile external; \
-                                      doc($pomfile)/project/dependencies/dependency[1]/artifactId/string()");
+                                      doc($pomfile)/project/dependencies/dependency/artifactId/string()");
 
         QString moduleName;
         moduleNameQuery.evaluateTo(&moduleName);
+        moduleName = moduleName.trimmed();
+        GraphNode *module = modules[moduleName];
+        if (module == nullptr) {
+            module = new GraphNode(moduleName);
+            modules.insert(moduleName, module);
+        }
+//qDebug() << moduleName;
+        QStringList dependencyNames;
         pomfile.seek(0);
-        QString dependencyNames;
         dependencyNameQuery.evaluateTo(&dependencyNames);
 
-        GraphNode *module = modules[moduleName];
-        module->name = moduleName;
-        QString foo = dependencyNames.at(0);
-        qDebug() << foo;
-        foreach(const QString &dependencyName, dependencyNames) {
-qDebug() << dependencyName << endl;
+        foreach (QString dependencyName, dependencyNames) {
+            dependencyName = dependencyName.trimmed();
+//qDebug() << "    " << dependencyName;
             GraphNode *dependency = modules[dependencyName];
+            if (dependency == nullptr) {
+                dependency = new GraphNode(dependencyName);
+                modules.insert(dependencyName, dependency);
+            }
             module->children.insert(dependencyName, dependency);
         }
-
-        modules.insert(moduleName, module);
     }
 
     foreach(GraphNode *const&node, modules) {
@@ -51,8 +65,14 @@ qDebug() << dependencyName << endl;
     }
 
     foreach(GraphNode *const&node, modules) {
+//qDebug() << node->name << ": " << node->index << ' ' << node->lowLink;
         delete node;
     }
+
+    out << "Press Enter to finish." << flush;
+
+    in.readLine();
+    out << endl;
 
     emit finished();
 }
@@ -83,12 +103,14 @@ void PomPom::strongConnect(GraphNode *node) {
             cycle.push(node2);
         }
         while (node2 != node);
+        if (cycle.size() <= 1) return;
 
         QTextStream out(stdout);
         out << "Cycle detected: " << cycle.pop()->name;
         foreach (GraphNode* n, cycle) {
             out << " -> " << n->name;
         }
+        out << endl;
     }
 }
 

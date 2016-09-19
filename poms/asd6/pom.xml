@@ -10,9 +10,9 @@
     </parent>
     <artifactId>number-six</artifactId>
     <dependencies>
-        <!--<dependency>
+        <dependency>
             <groupId>com.foo.bar</groupId>
             <artifactId>number-five</artifactId>
-        </dependency>-->
+        </dependency>
     </dependencies>
 </project>

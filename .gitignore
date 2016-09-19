@@ -38,3 +38,10 @@ release
 # QtCtreator CMake
 CMakeLists.txt.user
 
+# Xcode
+xcuserdata
+*.xctestrun
+*xcodeproj
+
+# Other
+.DS_Store

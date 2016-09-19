@@ -10,13 +10,5 @@
     </parent>
     <artifactId>number-four</artifactId>
     <dependencies>
-        <dependency>
-            <groupId>com.foo.bar</groupId>
-            <artifactId>number-five</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.foo.bar</groupId>
-            <artifactId>number-six</artifactId>
-        </dependency>
     </dependencies>
 </project>
