@@ -1,6 +1,6 @@
 #include "pompom.h"
 
-#include <QDebug>
+//#include <QDebug>
 #include <QFile>
 #include <QStack>
 #include <QTextStream>
@@ -106,11 +106,11 @@ void PomPom::strongConnect(GraphNode *node) {
         if (cycle.size() <= 1) return;
 
         QTextStream out(stdout);
-        out << "Cycle detected: " << cycle.pop()->name;
+        QString firstNode = cycle.pop()->name;
+        out << "Cycle detected:" << endl << "    " << firstNode;
         foreach (GraphNode* n, cycle) {
             out << " -> " << n->name;
         }
-        out << endl;
+        out << " -> " << firstNode << endl;
     }
 }
-
