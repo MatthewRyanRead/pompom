@@ -69,10 +69,9 @@ void PomPom::run() {
         delete node;
     }
 
-    out << "Press Enter to finish." << flush;
-
-    in.readLine();
-    out << endl;
+    if (!cycleFound) {
+        out << "No cycles found." << endl;
+    }
 
     emit finished();
 }
@@ -105,6 +104,7 @@ void PomPom::strongConnect(GraphNode *node) {
         while (node2 != node);
         if (cycle.size() <= 1) return;
 
+        cycleFound = true;
         QTextStream out(stdout);
         QString firstNode = cycle.pop()->name;
         out << "Cycle detected:" << endl << "    " << firstNode;

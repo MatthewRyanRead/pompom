@@ -26,6 +26,7 @@ class PomPom: public QObject
 
   private:
     int index = 0;
+    bool cycleFound = false;
     QStack<GraphNode*> stack;
 };
 
