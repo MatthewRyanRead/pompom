@@ -7,3 +7,5 @@ Example use:
 ```
 find . -name pom.xml | pompom
 ```
+
+To build, ensure your environment is set up properly for Qt5 and just run `qmake && make`.
