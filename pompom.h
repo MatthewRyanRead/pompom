@@ -3,6 +3,7 @@
 
 
 #include <QObject>
+#include <QFile>
 #include <QStack>
 
 #include <graphnode.h>
@@ -25,6 +26,9 @@ class PomPom: public QObject
     void finished();
 
   private:
+    QString getModuleName(QFile *pomFile);
+    QStringList getDependencies(QFile *pomFile);
+
     int index = 0;
     bool cycleFound = false;
     QStack<GraphNode*> stack;

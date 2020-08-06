@@ -1,12 +1,10 @@
 #include "pompom.h"
 
-//#include <QDebug>
+#include <QDebug>
 #include <QFile>
-#include <QStack>
 #include <QTextStream>
 #include <QVector>
 #include <QXmlQuery>
-
 
 void PomPom::run() {
     QMap<QString, GraphNode*> modules;
@@ -19,38 +17,28 @@ void PomPom::run() {
             break;
         }
 
-        QFile pomfile(filepath);
-        if (filepath.length() == 0 || !pomfile.open(QIODevice::ReadOnly)) {
-//qDebug() << "Bad file: " << filepath;
+        QFile pomFile(filepath);
+        if (filepath.length() == 0 || !pomFile.open(QIODevice::ReadOnly)) {
+qDebug() << "Bad file: " << filepath;
             continue;
         }
 
-        QXmlQuery moduleNameQuery, dependencyNameQuery;
-        moduleNameQuery.bindVariable("pomfile", &pomfile);
-        dependencyNameQuery.bindVariable("pomfile", &pomfile);
-        moduleNameQuery.setQuery("declare default element namespace \"http://maven.apache.org/POM/4.0.0\"; \
-                                  declare variable $pomfile external; \
-                                  doc($pomfile)/project/artifactId/string()");
-        dependencyNameQuery.setQuery("declare default element namespace \"http://maven.apache.org/POM/4.0.0\"; \
-                                      declare variable $pomfile external; \
-                                      doc($pomfile)/project/dependencies/dependency/artifactId/string()");
-
-        QString moduleName;
-        moduleNameQuery.evaluateTo(&moduleName);
-        moduleName = moduleName.trimmed();
+        QString moduleName = getModuleName(&pomFile);
         GraphNode *module = modules[moduleName];
         if (module == nullptr) {
             module = new GraphNode(moduleName);
             modules.insert(moduleName, module);
         }
-//qDebug() << moduleName;
-        QStringList dependencyNames;
-        pomfile.seek(0);
-        dependencyNameQuery.evaluateTo(&dependencyNames);
+
+qDebug() << moduleName;
+
+        QStringList dependencyNames = getDependencies(&pomFile);
 
         foreach (QString dependencyName, dependencyNames) {
             dependencyName = dependencyName.trimmed();
-//qDebug() << "    " << dependencyName;
+
+qDebug() << "    " << dependencyName;
+
             GraphNode *dependency = modules[dependencyName];
             if (dependency == nullptr) {
                 dependency = new GraphNode(dependencyName);
@@ -65,7 +53,6 @@ void PomPom::run() {
     }
 
     foreach(GraphNode *const&node, modules) {
-//qDebug() << node->name << ": " << node->index << ' ' << node->lowLink;
         delete node;
     }
 
@@ -74,6 +61,50 @@ void PomPom::run() {
     }
 
     emit finished();
+}
+
+QString PomPom::getModuleName(QFile *pomFile) {
+    QXmlQuery moduleNameQuery;
+    moduleNameQuery.bindVariable("pomFile", pomFile);
+    moduleNameQuery.setQuery("declare default element namespace \"http://maven.apache.org/POM/4.0.0\"; \
+                                      declare variable $pomFile external; \
+                                      doc($pomFile)/project/artifactId/string()");
+
+    QString moduleName;
+    moduleNameQuery.evaluateTo(&moduleName);
+    moduleName = moduleName.trimmed();
+    pomFile->seek(0);
+
+    return moduleName;
+}
+
+QStringList PomPom::getDependencies(QFile *pomFile) {
+    QXmlQuery dependencyNameQuery, dependencyNameQuery2, dependencyNameQuery3;
+    dependencyNameQuery.bindVariable("pomFile", pomFile);
+    dependencyNameQuery2.bindVariable("pomFile", pomFile);
+    dependencyNameQuery3.bindVariable("pomFile", pomFile);
+
+    dependencyNameQuery.setQuery("declare default element namespace \"http://maven.apache.org/POM/4.0.0\"; \
+                                  declare variable $pomFile external; \
+                                  doc($pomFile)/project/dependencies/dependency/artifactId/string()");
+    dependencyNameQuery2.setQuery("declare default element namespace \"http://maven.apache.org/POM/4.0.0\"; \
+                                   declare variable $pomFile external; \
+                                   doc($pomFile)/project/dependencyManagement/dependencies/dependency/artifactId/string()");
+    dependencyNameQuery3.setQuery("declare default element namespace \"http://maven.apache.org/POM/4.0.0\"; \
+                                   declare variable $pomFile external; \
+                                   doc($pomFile)/project/modules/module/string()");
+
+    QStringList dependencyNames, dependencyNames2, dependencyNames3;
+    dependencyNameQuery.evaluateTo(&dependencyNames);
+    pomFile->seek(0);
+    dependencyNameQuery2.evaluateTo(&dependencyNames2);
+    pomFile->seek(0);
+    dependencyNameQuery3.evaluateTo(&dependencyNames3);
+    pomFile->seek(0);
+
+    dependencyNames.append(dependencyNames2);
+    dependencyNames.append(dependencyNames3);
+    return dependencyNames;
 }
 
 void PomPom::strongConnect(GraphNode *node) {
